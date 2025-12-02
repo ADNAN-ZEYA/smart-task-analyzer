@@ -208,4 +208,4 @@ Below is the visual preview of all main screens of the Smart Task Manager.
 ---
 
 ### 5️⃣ Quick Session Sorting  
-![Quick Session](Images/Quick session.png)
+![Quick Session](Images/Quicksession.png)
