@@ -15,35 +15,6 @@ This project solves the "Task Paralysis" problem by using a **Weighted Decay Alg
 
 ---
 
-## 🎨 User Interface
-
-### Homepage - Main Dashboard
-The dashboard provides a sleek, dark-themed interface for task management with real-time prioritization.
-
-![Homepage](./Images/Homepage.png)
-
-### Smart Strategy Selection
-Switch between different prioritization strategies to match your workflow:
-
-![Smart Strategy](./Images/Smart.png)
-
-### Quick Session Management
-Quick wins feature for fast task completion tracking:
-
-![Quick Session](./Images/Quicksession.png)
-
-### Impact Analysis
-Visual breakdown of task impact on your workflow:
-
-![Impact Analysis](./Images/Impact.png)
-
-### Date-Based Sorting
-Organize tasks by deadline with intelligent date handling:
-
-![Date Sorting](./Images/Date.png)
-
----
-
 ## 🛠️ Setup Instructions
 
 ### Prerequisites
@@ -111,3 +82,34 @@ This is the unique feature. The engine checks the **Dependency Graph** defined i
 Run the automated unit tests to verify the algorithm:
 ```bash
 python manage.py test tasks
+
+---
+
+## 🎨 User Interface
+
+### Homepage - Main Dashboard
+The dashboard provides a sleek, dark-themed interface for task management with real-time prioritization.
+
+![Homepage](./Images/Homepage.png)
+
+### Smart Strategy Selection
+Switch between different prioritization strategies to match your workflow:
+
+![Smart Strategy](./Images/Smart.png)
+
+### Quick Session Management
+Quick wins feature for fast task completion tracking:
+
+![Quick Session](./Images/Quicksession.png)
+
+### Impact Analysis
+Visual breakdown of task impact on your workflow:
+
+![Impact Analysis](./Images/Impact.png)
+
+### Date-Based Sorting
+Organize tasks by deadline with intelligent date handling:
+
+![Date Sorting](./Images/Date.png)
+
+---
