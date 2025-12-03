@@ -1,114 +1,51 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework import generics
+from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.permissions import IsAuthenticated
-from django_filters.rest_framework import DjangoFilterBackend
-
 from .models import Task
-from .serializers import TaskSerializer, TaskListSerializer
-from .engine import SmartTaskEngine
+from .serializers import TaskSerializer
+from .engine import SmartScoringEngine
+from datetime import date
 
-
-class TaskViewSet(viewsets.ModelViewSet):
-    """
-    API endpoints for Task management.
-    
-    Provides CRUD operations and intelligent task analysis.
-    Requires authentication via JWT token.
-    """
-    
+# 1. API to Create New Tasks (This makes the form work)
+class TaskCreateView(generics.CreateAPIView):
+    queryset = Task.objects.all()
     serializer_class = TaskSerializer
-    permission_classes = [IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['status', 'priority', 'assigned_to']
-    search_fields = ['title', 'description', 'tags']
-    ordering_fields = ['priority', 'deadline', 'created_at', 'complexity']
-    ordering = ['-priority', 'deadline']
-    
-    def get_queryset(self):
-        """Return tasks only for the current user"""
-        return Task.objects.filter(user=self.request.user)
-    
-    def perform_create(self, serializer):
-        """Automatically set the user when creating a task"""
-        serializer.save(user=self.request.user)
-    
-    def get_serializer_class(self):
-        """Use simplified serializer for list views"""
-        if self.action == 'list':
-            return TaskListSerializer
-        return TaskSerializer
-    
-    @action(detail=False, methods=['get'])
-    def analyze(self, request):
-        """
-        Analyze all tasks and return optimized prioritization.
+
+# 2. API to Analyze and Sort Tasks
+class TaskAnalyzeView(APIView):
+    def post(self, request):
+        # Fetch uncompleted tasks
+        tasks = Task.objects.filter(completed=False)
+        strategy = request.data.get('strategy', 'smart_balance')
         
-        GET /api/tasks/analyze/
-        
-        Returns:
-            - optimized_order: List of tasks in optimal execution order
-            - analysis: Detailed analysis from the smart algorithm
-            - recommendations: Action items for task management
-        """
-        tasks = self.get_queryset()
-        engine = SmartTaskEngine(tasks)
-        
-        analysis = engine.analyze_tasks()
-        optimized_tasks = engine.get_optimized_order()
-        recommendations = engine.get_recommendations()
-        
-        return Response({
-            'optimized_order': TaskSerializer(optimized_tasks, many=True).data,
-            'analysis': analysis,
-            'recommendations': recommendations,
-        })
-    
-    @action(detail=True, methods=['post'])
-    def start(self, request, pk=None):
-        """
-        Mark a task as in progress.
-        
-        POST /api/tasks/{id}/start/
-        """
-        task = self.get_object()
-        from django.utils import timezone
-        
-        task.status = 'in_progress'
-        task.started_at = timezone.now()
-        task.save()
-        
-        serializer = self.get_serializer(task)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    @action(detail=True, methods=['post'])
-    def complete(self, request, pk=None):
-        """
-        Mark a task as completed.
-        
-        POST /api/tasks/{id}/complete/
-        """
-        task = self.get_object()
-        from django.utils import timezone
-        
-        task.status = 'completed'
-        task.completed_at = timezone.now()
-        task.save()
-        
-        serializer = self.get_serializer(task)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-    
-    @action(detail=True, methods=['post'])
-    def block(self, request, pk=None):
-        """
-        Mark a task as blocked.
-        
-        POST /api/tasks/{id}/block/
-        """
-        task = self.get_object()
-        task.status = 'blocked'
-        task.save()
-        
-        serializer = self.get_serializer(task)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        results = []
+        for task in tasks:
+            data = TaskSerializer(task).data
+            
+            # --- STRATEGY LOGIC ---
+            if strategy == 'deadline':
+                days = (task.due_date - date.today()).days
+                # Lower days = higher score (urgent)
+                data['score'] = 100 - (days * 2)
+                data['explanation'] = f"Due in {days} days"
+                
+            elif strategy == 'impact':
+                # Importance is king
+                data['score'] = task.importance * 10
+                data['explanation'] = f"Importance Rating: {task.importance}/10"
+                
+            elif strategy == 'quick_wins':
+                # Shortest tasks first
+                data['score'] = 100 - (task.estimated_hours * 2)
+                data['explanation'] = f"Takes {task.estimated_hours} hours"
+                
+            else:
+                # SMART BALANCE (Your Algorithm)
+                data['score'] = SmartScoringEngine.calculate_score(task)
+                data['explanation'] = SmartScoringEngine.generate_explanation(task, data['score'])
+            
+            results.append(data)
+
+        # Sort descending by score
+        sorted_results = sorted(results, key=lambda x: x['score'], reverse=True)
+        return Response(sorted_results)

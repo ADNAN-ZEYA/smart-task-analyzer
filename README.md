@@ -1,211 +1,113 @@
-# Smart Task Manager
+# 🚀 Singularium Smart Task Analyzer
 
-## Your Selling Point
+A high-performance task prioritization engine with a **SaaS-style Dark Mode Dashboard**.
 
-A Django-powered REST API with a beautiful web interface that intelligently manages and prioritizes tasks using advanced algorithms. The Smart Task Manager analyzes task dependencies, deadlines, and complexity to provide optimal task ordering and resource allocation.
+This project solves the "Task Paralysis" problem by using a **Weighted Decay Algorithm** to intelligently score and rank tasks. Unlike simple to-do lists, this engine understands **Dependency Graphs**, **Urgency Decay**, and **Opportunity Costs**.
 
-### Key Features
-- **🧠 Intelligent Task Prioritization**: Proprietary algorithm that considers deadlines, dependencies, and complexity
-- **👤 User Authentication**: Secure JWT-based login/registration system
-- **🎨 Beautiful UI**: Responsive web interface with real-time task management
-- **📊 Analytics Dashboard**: Track completion rates, workload metrics, and overdue tasks
-- **🚀 Multiple Strategies**: Smart Balance, Deadline-based, Impact-based, and Quick Wins prioritization
-- **💡 Smart Recommendations**: AI-powered suggestions to optimize your workflow
-- **📱 Fully Responsive**: Works on desktop, tablet, and mobile devices
-- **RESTful API**: Full-featured REST API for programmatic access
-- **CORS Support**: Ready for third-party frontend integration
+---
 
-## Getting Started
+## 📸 Features
+
+* **🧠 Smart Scoring Engine:** A heuristic algorithm that calculates a "Priority Score" (0-100) based on 4 vectors.
+* **📊 Pro Dashboard UI:** A split-screen, dark-themed interface built for productivity.
+* **🕸️ Dependency Gravity:** Tasks that block other important tasks are automatically promoted to the top.
+* **📉 Urgency Curves:** Implements exponential decay for deadlines (tasks due tomorrow are 10x more urgent than tasks due next week).
+
+---
+
+## 🎨 User Interface
+
+### Homepage - Main Dashboard
+The dashboard provides a sleek, dark-themed interface for task management with real-time prioritization.
+
+![Homepage](./Images/Homepage.png)
+
+### Smart Strategy Selection
+Switch between different prioritization strategies to match your workflow:
+
+![Smart Strategy](./Images/Smart.png)
+
+### Quick Session Management
+Quick wins feature for fast task completion tracking:
+
+![Quick Session](./Images/Quicksession.png)
+
+### Impact Analysis
+Visual breakdown of task impact on your workflow:
+
+![Impact Analysis](./Images/Impact.png)
+
+### Date-Based Sorting
+Organize tasks by deadline with intelligent date handling:
+
+![Date Sorting](./Images/Date.png)
+
+---
+
+## 🛠️ Setup Instructions
 
 ### Prerequisites
-- Python 3.8+
-- pip
+* Python 3.8+
+* Pip
 
 ### Installation
+1.  **Clone the repository**
+    ```bash
+    git clone <your-repo-link-here>
+    cd smart_task_manager
+    ```
 
-1. Create a virtual environment:
-```bash
-python -m venv venv
-venv\Scripts\activate  # On Windows
-```
+2.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+3.  **Initialize Database**
+    ```bash
+    python manage.py makemigrations
+    python manage.py migrate
+    ```
 
-3. Run migrations:
-```bash
-python manage.py migrate
-```
+4.  **Run the Application**
+    ```bash
+    python manage.py runserver
+    ```
+    * **Dashboard:** Open `frontend/index.html` in your browser.
+    * **API:** `http://127.0.0.1:8000/api/tasks/analyze/`
 
-4. Start the server:
-```bash
-python manage.py runserver
-```
+---
 
-5. Open the web interface:
-```
-http://localhost:8000/index.html
-```
+## 🧠 Algorithm Explanation (The "Secret Sauce")
 
-## How to Use
+The core of this project is the `SmartScoringEngine` class. It avoids linear sorting by using a weighted sum formula:
 
-### Web Interface (index.html)
-1. **Register/Login**: Create a new account or sign in with existing credentials
-2. **Add Tasks**: Fill in the task form with title, deadline, complexity, and priority
-3. **View Optimized Order**: See tasks sorted by intelligent algorithm
-4. **Choose Strategy**: Select from 4 different prioritization strategies
-5. **Track Progress**: Update task status (Start, Complete, Delete)
-6. **View Analytics**: Monitor completion rates and workload metrics
-7. **Get Recommendations**: Receive AI-powered workflow suggestions
+$$ Score = (U \times W_u) + (I \times W_i) + (E \times W_e) + (D \times W_d) $$
 
-### API Endpoints
+### 1. Urgency (U) - The Decay Function
+I avoided linear days-counting. Instead, I used a hyperbolic decay function: `30 / (days + 1)`.
+* *Result:* A task due in 24 hours scores exponentially higher than one due in 3 days.
+* *Edge Case:* Past-due tasks break the curve and receive a static "Critical" penalty.
 
-**Authentication:**
-- `POST /api/auth/login/` - User login
-- `POST /api/auth/register/` - Register new user
+### 2. Dependency Gravity (D) - The Graph Logic
+This is the unique feature. The engine checks the **Dependency Graph** defined in `models.py`.
+* If **Task A** blocks **Task B**, and **Task B** is "High Importance," then **Task A** inherits a "Gravity Bonus."
+* This ensures bottlenecks are cleared first, even if the blocking task itself seems trivial.
 
-**Tasks (Requires Authentication):**
-- `GET /api/tasks/` - List all user tasks
-- `POST /api/tasks/` - Create a new task
-- `GET /api/tasks/<id>/` - Retrieve a specific task
-- `PUT /api/tasks/<id>/` - Update a task
-- `DELETE /api/tasks/<id>/` - Delete a task
-- `GET /api/tasks/analyze/` - Get AI-powered task analysis
-- `POST /api/tasks/<id>/start/` - Mark task as in progress
-- `POST /api/tasks/<id>/complete/` - Mark task as completed
-- `POST /api/tasks/<id>/block/` - Mark task as blocked
+### 3. Strategic Importance (I) & Effort (E)
+* **Importance:** Multiplied by 3.5 to ensure strategic goals always outweigh busy work.
+* **Effort:** In "Quick Wins" mode, tasks under 2 hours receive a micro-bonus to encourage momentum.
 
-### Example API Usage
+---
 
-**Login:**
-```bash
-curl -X POST http://localhost:8000/api/auth/login/ \
-  -H "Content-Type: application/json" \
-  -d '{"username": "user", "password": "pass"}'
-```
+## 🏗️ Design Decisions
 
-**Create Task:**
-```bash
-curl -X POST http://localhost:8000/api/tasks/ \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Fix Bug",
-    "description": "Fix login issue",
-    "priority": 4,
-    "deadline": "2025-12-31T23:59:59Z",
-    "estimated_duration": 3,
-    "complexity": 7
-  }'
-```
+* **Separation of Concerns:** The scoring logic is isolated in `tasks/engine.py`, keeping the Views clean and testable.
+* **Frontend Architecture:** Built with pure HTML/JS/CSS to ensure zero build-step latency, but styled with CSS Variables to mimic a React/Tailwind workflow.
+* **Safety:** The `Task` model includes validation to prevent Circular Dependencies (A waits for B waits for A).
 
-## Technology Stack
-- **Backend**: Django 4.2.7
-- **API**: Django REST Framework 3.14.0
-- **Authentication**: djangorestframework-simplejwt 5.5.1
-- **CORS**: django-cors-headers 4.3.1
-- **Database**: SQLite3
-- **Frontend**: Vanilla JavaScript, HTML5, CSS3
+---
 
-## Architecture
-
-```
-smart_task_manager/
-├── index.html              # Web UI (open in browser)
-├── manage.py
-├── requirements.txt
-├── backend/                # Django config
-│   ├── settings.py        # JWT, CORS, REST config
-│   ├── urls.py
-│   └── wsgi.py
-└── tasks/                  # Core app
-    ├── models.py          # Task model with user support
-    ├── views.py           # REST API viewsets
-    ├── serializers.py     # JSON serialization
-    ├── urls.py            # API routing
-    ├── auth_views.py      # Authentication endpoints
-    └── engine.py          # Smart algorithm (The Brain)
-```
-
-## The Smart Algorithm (engine.py)
-
-The core intelligence behind the task prioritization:
-
-1. **Priority Weight (40%)**: Direct task importance
-2. **Deadline Urgency (35%)**: Time-based scoring (overdue = highest)
-3. **Complexity & Duration (15%)**: Task size and difficulty
-4. **Dependencies (10%)**: Blocking tasks get boosted scores
-
-**Smart Features:**
-- Detects overdue tasks and flags them
-- Analyzes workload balance
-- Identifies blocking dependencies
-- Tracks completion progress
-- Generates actionable recommendations
-
-## Creating a User
-
-The first time you run the app, register a new account:
-
-1. Open http://localhost:8000/index.html
-2. Click "Register"
-3. Enter username, email, and password
-4. Start creating tasks!
-
-## Development
-
-### Run Tests
+## 🧪 Testing
+Run the automated unit tests to verify the algorithm:
 ```bash
 python manage.py test tasks
-```
-
-### Create Superuser
-```bash
-python manage.py createsuperuser
-```
-
-Access admin panel at: `http://localhost:8000/admin/`
-
-### Debug Mode
-All features work in development with `DEBUG=True` in settings.py
-
-## Future Enhancements
-- [ ] Team collaboration features
-- [ ] Recurring tasks
-- [ ] Task templates
-- [ ] Slack/Teams integration
-- [ ] Mobile app
-- [ ] Calendar view
-- [ ] Time tracking
-- [ ] Export reports
-
-## 📸 UI Showcase — Smart Task Manager
-
-Below is the visual preview of all main screens of the Smart Task Manager.
-
----
-
-### 1️⃣ Homepage  
-![Homepage](Images/Homepage.png)
-
----
-
-### 2️⃣ Smart Sorting  
-![Smart](Images/Smart.png)
-
----
-
-### 3️⃣ Date Sorting  
-![Date](Images/Date.png)
-
----
-
-### 4️⃣ Impact Sorting  
-![Impact](Images/Impact.png)
-
----
-
-### 5️⃣ Quick Session Sorting  
-![Quick Session](Images/Quicksession.png)

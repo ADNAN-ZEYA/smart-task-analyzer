@@ -1,6 +1,3 @@
-from django.apps import AppConfig
+"""Placeholder `apps.py` for the `tasks` Django app."""
 
-
-class TasksConfig(AppConfig):
-    default_auto_field = 'django.db.models.BigAutoField'
-    name = 'tasks'
+__all__ = []
