@@ -82,6 +82,7 @@ This is the unique feature. The engine checks the **Dependency Graph** defined i
 Run the automated unit tests to verify the algorithm:
 ```bash
 python manage.py test tasks
+```
 
 ---
 
